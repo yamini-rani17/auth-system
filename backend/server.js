@@ -1,22 +1,17 @@
-const express = require("express");
+import express from "express";
+import dotenv from "dotenv";
+
+dotenv.config();
+
 const app = express();
 
-const connectDB = require("./config/db");
-const cors = require("cors");
+const PORT = process.env.PORT || 3000;
 
+// ✅ Test route
+app.get("/", (req, res) => {
+  res.send("Backend Running 🚀");
+});
 
-// 🔥 CONNECT DATABASE
-connectDB();
-
-// middleware
-app.use(express.json());
-app.use(cors());
-
-
-const authRoutes = require("./routes/authRoutes");
-
-app.use("/api/auth", authRoutes);
-
-app.listen(3000, () => {
-  console.log("Server running on port 3000");
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
