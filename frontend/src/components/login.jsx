@@ -1,61 +1,65 @@
-import { useState } from "react";
-import axios from "axios";
+const express = require("express");
+const cors = require("cors");
+const jwt = require("jsonwebtoken");
 
-function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+const app = express();
+app.use(express.json());
+app.use(cors());
 
-  const handleLogin = async () => {
-    try {
-      const res = await axios.post(
-        "http://localhost:3000/api/auth/login",
-        { email, password }
-      );
+const PORT = process.env.PORT || 5000;
+const JWT_SECRET = "yamini_secret_123"; // env me daalna better hai
 
-      // ✅ token save
-      localStorage.setItem("token", res.data.token);
+// Dummy DB (array)
+let users = [];
 
-      alert("Login Success 🔥");
+// 🔹 REGISTER
+app.post("/register", (req, res) => {
+  const { name, email, password } = req.body;
 
-    } catch (err) {
-      console.log(err);
-      alert("Login Failed ❌");
-    }
-  };
+  const userExists = users.find((u) => u.email === email);
+  if (userExists) {
+    return res.status(400).json({ message: "User already exists ❌" });
+  }
 
-  return (
-    <div className="flex items-center justify-center bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 py-10">
+  const newUser = { name, email, password };
+  users.push(newUser);
 
-      <div className="bg-white p-8 rounded-2xl shadow-2xl w-[350px]">
+  res.json({ message: "Registered Successfully ✅" });
+});
 
-        <h2 className="text-2xl font-bold text-center mb-6">
-          Login 🔐
-        </h2>
+// 🔹 LOGIN
+app.post("/login", (req, res) => {
+  const { email, password } = req.body;
 
-        <input
-          type="email"
-          placeholder="Email"
-          className="w-full p-2 mb-4 border rounded-lg outline-none focus:ring-2 focus:ring-purple-400"
-          onChange={(e) => setEmail(e.target.value)}
-        />
-
-        <input
-          type="password"
-          placeholder="Password"
-          className="w-full p-2 mb-4 border rounded-lg outline-none focus:ring-2 focus:ring-purple-400"
-          onChange={(e) => setPassword(e.target.value)}
-        />
-
-        <button
-          onClick={handleLogin}
-          className="w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition duration-300"
-        >
-          Login
-        </button>
-
-      </div>
-    </div>
+  const user = users.find(
+    (u) => u.email === email && u.password === password
   );
-}
 
-export default Login;
+  if (!user) {
+    return res.status(400).json({ message: "Invalid credentials ❌" });
+  }
+
+  const token = jwt.sign({ email: user.email }, JWT_SECRET, {
+    expiresIn: "1h",
+  });
+
+  res.json({ message: "Login Success ✅", token, user });
+});
+
+// 🔹 PROTECTED ROUTE
+app.get("/profile", (req, res) => {
+  const token = req.headers.authorization;
+
+  if (!token) {
+    return res.status(401).json({ message: "No token ❌" });
+  }
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    res.json({ message: "Profile data 🔥", user: decoded });
+  } catch (err) {
+    res.status(401).json({ message: "Invalid token ❌" });
+  }
+});
+
+app.listen(PORT, () => console.log("Server running 🚀"));

@@ -16,26 +16,40 @@ function App() {
   };
 
   // REGISTER
-  const handleRegister = () => {
-    localStorage.setItem("user", JSON.stringify(formData));
-    alert("Registered Successfully ✅");
-    setIsLogin(true);
-  };
+  const API_URL = "https://auth-backend.onrender.com";
+
+const handleRegister = async () => {
+  const res = await fetch(`${API_URL}/register`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(formData),
+  });
+
+  const data = await res.json();
+  alert(data.message);
+  setIsLogin(true);
+};
 
   // LOGIN
-  const handleLogin = () => {
-    const savedUser = JSON.parse(localStorage.getItem("user"));
+  const handleLogin = async () => {
+  const res = await fetch(`${API_URL}/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(formData),
+  });
 
-    if (
-      savedUser &&
-      savedUser.email === formData.email &&
-      savedUser.password === formData.password
-    ) {
-      setUser(savedUser);
-    } else {
-      alert("Invalid Credentials ❌");
-    }
-  };
+  const data = await res.json();
+
+  if (res.ok) {
+    setUser(data.user);
+  } else {
+    alert(data.message);
+  }
+};
 
   // LOGOUT
   const handleLogout = () => {
